@@ -183,22 +183,34 @@ def plan_storyboard(
 
     client = ollama.Client(host=OLLAMA_BASE_URL)
 
-    response = client.chat(
-        model=model,
-        messages=[
-            {"role": "system", "content": STORYBOARD_SYSTEM},
-            {"role": "user", "content": prompt},
-        ],
-        options={
-            "temperature": STORYBOARD_TEMPERATURE,
-            "num_predict": 32768,  # Long response needed for 50+ scenes
-        },
-        format="json",
-    )
+    messages = [
+        {"role": "system", "content": STORYBOARD_SYSTEM},
+        {"role": "user", "content": prompt},
+    ]
 
-    text = response["message"]["content"].strip()
-    storyboard = _robust_json_parse(text)
-    _validate_storyboard(storyboard)
+    for attempt in range(3):
+        response = client.chat(
+            model=model,
+            messages=messages,
+            options={
+                "temperature": STORYBOARD_TEMPERATURE,
+                "num_predict": 32768,  # Long response needed for 50+ scenes
+            },
+            format="json",
+        )
+
+        text = response.get("message", {}).get("content", "").strip()
+
+        try:
+            storyboard = _robust_json_parse(text)
+            _validate_storyboard(storyboard)
+            break
+        except (json.JSONDecodeError, ValueError) as e:
+            if attempt == 2:
+                raise RuntimeError(f"Failed to generate valid storyboard after 3 attempts: {e}")
+            print(f"[Storyboard] Warning: LLM produced invalid JSON ({e}). Asking it to self-correct... (Attempt {attempt+1}/3)")
+            messages.append({"role": "assistant", "content": text})
+            messages.append({"role": "user", "content": f"Your previous output was invalid JSON or failed validation: {e}. Please fix the formatting/content and return ONLY valid JSON."})
 
     # Assign global scene IDs
     global_id = 1

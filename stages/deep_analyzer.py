@@ -179,21 +179,34 @@ def analyze_chapter(
 
     client = ollama.Client(host=OLLAMA_BASE_URL)
 
-    response = client.chat(
-        model=model,
-        messages=[
-            {"role": "system", "content": DEEP_ANALYSIS_SYSTEM},
-            {"role": "user", "content": prompt},
-        ],
-        options={
-            "temperature": STORYBOARD_TEMPERATURE,
-            "num_predict": 16384,  # Allow long response
-        },
-        format="json",
-    )
+    messages = [
+        {"role": "system", "content": DEEP_ANALYSIS_SYSTEM},
+        {"role": "user", "content": prompt},
+    ]
 
-    analysis = _robust_json_parse(text)
-    _validate_analysis(analysis)
+    for attempt in range(3):
+        response = client.chat(
+            model=model,
+            messages=messages,
+            options={
+                "temperature": STORYBOARD_TEMPERATURE,
+                "num_predict": 16384,  # Allow long response
+            },
+            format="json",
+        )
+
+        text = response.get("message", {}).get("content", "").strip()
+
+        try:
+            analysis = _robust_json_parse(text)
+            _validate_analysis(analysis)
+            break
+        except (json.JSONDecodeError, ValueError) as e:
+            if attempt == 2:
+                raise RuntimeError(f"Failed to generate valid deep analysis after 3 attempts: {e}")
+            print(f"[Analyzer] Warning: LLM produced invalid JSON ({e}). Asking it to self-correct... (Attempt {attempt+1}/3)")
+            messages.append({"role": "assistant", "content": text})
+            messages.append({"role": "user", "content": f"Your previous output was invalid JSON or failed validation: {e}. Please fix the formatting/content and return ONLY valid JSON."})
 
     if output_path:
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
