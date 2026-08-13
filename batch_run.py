@@ -29,7 +29,13 @@ def pull_models():
         except Exception as e:
             print(f"Warning: Could not run ollama pull for {model}. Is Ollama installed and running? Error: {e}")
 
+import argparse
+
 def main():
+    parser = argparse.ArgumentParser(description="Batch run the Manim pipeline.")
+    parser.add_argument("--first", type=str, help="Name of the PDF file to process first (e.g., 'Integers.pdf')")
+    args = parser.parse_args()
+
     print("\n" + "="*60)
     print("  Manim Educational Video Pipeline — Batch Runner")
     print("="*60 + "\n")
@@ -47,6 +53,16 @@ def main():
     if not pdf_files:
         print(f"No PDF files found in {inputs_dir.absolute()}")
         sys.exit(0)
+
+    # Prioritize the specified book if --first is provided
+    if args.first:
+        first_pdf = next((p for p in pdf_files if p.name.lower() == args.first.lower()), None)
+        if first_pdf:
+            pdf_files.remove(first_pdf)
+            pdf_files.insert(0, first_pdf)
+            print(f"Prioritizing {first_pdf.name} to run first.")
+        else:
+            print(f"Warning: Could not find '{args.first}' in inputs directory.")
 
     print(f"\nFound {len(pdf_files)} PDF(s) to process:\n" + "\n".join([f"  - {p.name}" for p in pdf_files]))
 
