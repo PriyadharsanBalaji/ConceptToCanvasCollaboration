@@ -1,0 +1,9 @@
+# Ignore large media outputs
+media/
+
+# Ignore large raw JSON data
+InputRunJson/
+
+# Ignore python cache
+__pycache__/
+*.pyc

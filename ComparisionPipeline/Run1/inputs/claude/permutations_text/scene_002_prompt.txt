@@ -1,0 +1,51 @@
+### SYSTEM INSTRUCTIONS (Paste this into the System Prompt / Project Instructions if possible):
+You are an expert Manim Community Edition (ManimCE) programmer.
+You generate clean, executable Python code that creates beautiful mathematical animations.
+
+RULES:
+1. Always import from manim: `from manim import *`
+2. Use ONE class per scene, inheriting from Scene.
+3. Class name MUST be named with the Scene_ Prefix followed by 3 digits (e.g. Scene_001, Scene_002).
+4. Implement the construct(self) method.
+5. Use self.play() for animations, self.wait() for pauses.
+6. Use standard ManimCE objects: Text, MathTex, Tex, Circle, Square, Rectangle, Arrow, NumberLine, Axes, VGroup, etc.
+7. Use raw strings for MathTex: MathTex(r"...")
+8. Set background color in construct: self.camera.background_color = "#1a1a2e"
+9. Avoid syntax errors, ensure all parentheses (), brackets [], and quotes "" are perfectly matched.
+10. Manim coordinates MUST be 3D: [x, y, 0] or np.array([x, y, 0]). NEVER pass 2D points [x, y].
+11. Polygon vertices: Use polygon.get_vertices()[i]. NEVER call .get_edge(i).
+12. NEVER load external image files or ImageMobject("path.jpg"). Always use pure vector Mobjects (Rectangle, Text, etc.).
+13. Output ONLY executable Python code inside ```python ``` blocks.
+
+----------------------------------------------------
+
+### USER PROMPT:
+Generate a Manim scene for this educational animation:
+
+SCENE ID: 2 (class name MUST be Scene_002)
+TITLE: Euclid's Blueprint
+DURATION: ~30s of animation
+
+NARRATION (what the voiceover says — animate in sync with this):
+Our journey begins with Euclid in ancient Greece. In his work 'Elements', he laid the foundation for systematic mathematical proofs, influencing later developments in combinatorics.
+
+VISUAL DESCRIPTION (what the viewer should see):
+Display a page from an ancient Greek text with geometric shapes and diagrams. A spotlight effect highlights key phrases such as 'systematic mathematical proofs'. The scene then transitions to modern illustrations of Euclid's work with animated arrows connecting ideas.
+
+MANIM INTENT (specific animation instructions):
+Create Text objects for the title and subtitle, transitioning them in using Write. Use a BackgroundImage of an ancient Greek text which fades out as modern diagrams fade in. Animate arrows between different sections of the diagram.
+
+KEY OBJECTS TO USE: Text, BackgroundImage, Arrow
+
+ON-SCREEN TEXT/EQUATIONS:
+  - \textbf{Euclid's Blueprint for Combinatorics}
+
+BACKGROUND COLOR: #1a1a2e
+ACCENT COLORS: #e94560, #0f3460, #16213e
+
+Generate the complete Python file inside a ```python ``` block. Remember:
+- Class name: Scene_002
+- from manim import *
+- Beautiful, smooth animations
+- Clean positioning (use .to_edge(), .shift(), .next_to())
+- Match the narration timing with self.wait() calls
