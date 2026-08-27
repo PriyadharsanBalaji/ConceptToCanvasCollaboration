@@ -95,19 +95,51 @@ We built the `ComparisionPipeline/` directory as an evaluation sandbox to manual
 
 ---
 
+## 📚 V2: Iterative Whole-Book Processing (New Architecture)
+
+In **V2**, we introduced a major architectural change to solve the LLM "Context Window Limit". 
+
+When passing an entire 200-page textbook to `qwen2.5:14b`, the LLM would hit its ~35,000 character limit and severely truncate the output, meaning you only ever got a video about the *first chapter*.
+
+**How V2 Solves This (`--whole-book`):**
+1. **The Chunker:** When you run `run.py --whole-book`, Stage 0 extracts the entire PDF as normal into `master_content.json`. However, it then mathematically divides the book into logical "chunks" of exactly 25,000 characters each.
+2. **Iterative Isolation:** The pipeline then loops over these chunks. It creates completely isolated sub-directories (e.g., `chunk_1/`, `chunk_2/`) and runs all 5 Stages (Deep Analysis → Assembly) *inside* that specific folder independently.
+3. **Super Assembly:** Once all chunks have successfully produced their own fully narrated Manim video (`final_...mp4`), V2 automatically boots up a final FFmpeg "Super Assembly" process that seamlessly stitches all the chunk videos together (preserving all audio tracks!) into one master `THE_COMPLETE_BOOK.mp4`.
+
+This guarantees that you can process infinitely long textbooks without ever dropping data!
+
+---
+
+## 🎬 V3: Reel-Style Continuous Flow & Advanced Formatting (New Architecture)
+
+In **V3**, we introduced a complete narrative and formatting overhaul based on user feedback that the videos felt too rigid, contained boring historical trivia, and suffered from text overlapping/spilling off-screen.
+
+**What pushed us to this decision:**
+1. **Pacing:** The LLMs were strictly following a textbook-like chapter structure (Hook -> History -> Core Concept), making the videos feel disjointed rather than like a viral, fast-paced YouTube Reel.
+2. **Engagement:** History and dates were slowing down the "Wow!" factor of the math.
+3. **Manim Bugs:** The LLM was occasionally writing text over existing text, or making text too large for the camera frame.
+
+**How V3 Solves This:**
+1. **Purged History:** `deep_analyzer.py` was rewritten to completely ban ancient history and trivia, replacing it with `real_world_application` (e.g., video game physics) to keep kids hooked.
+2. **Continuous Flow Narrative:** `storyboard_planner.py`'s rigid 7-part arc was destroyed. It now uses a "Continuous Journey" directive. Every single scene MUST end with a transition phrase or cliffhanger question that leads perfectly into the next scene. 
+3. **Advanced Manim Constraints:** `manim_codegen.py` was updated with critical formatting rules:
+   - **No Off-Screen Text:** Enforced `.scale_to_fit_width(config.frame_width - 1)`.
+   - **No Overlapping Text:** Enforced clearing the screen (`self.clear()`) or stacking cleanly (`VGroup.arrange(DOWN)`) before introducing new concepts.
+
+---
+
 ## ⚙️ Execution Commands
 
-**Run the Full Main Pipeline:**
+**Run the Full Main Pipeline (Single Chapter):**
 ```bash
-python pipeline.py --pdf iemh101.pdf
+python run.py --pdf iemh101.pdf
 ```
 
-**Generate the Storyboard Only (Stop after Stage 2):**
+**Run V2 Whole-Book Processing:**
 ```bash
-python pipeline.py --pdf iemh101.pdf --plan-only
-```
+# Process the entire book automatically by chunking it!
+python run.py --pdf iemh101.pdf --whole-book
 
-**Resume from a specific stage (e.g., Stage 3: Code Gen):**
-```bash
-python pipeline.py --pdf iemh101.pdf --resume --stage 3
+# Limit the whole book processing to the first 5 chunks
+python run.py --pdf iemh101.pdf --whole-book --max-chunks 5
 ```
